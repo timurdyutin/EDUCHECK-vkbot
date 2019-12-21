@@ -56,7 +56,8 @@ class Server:
     def __init__(self, token, groupID, databaseName):
         self.token = token
         self.groupID = groupID
-        self.databaseName = databaseName
+        self.databaseName = f"/data/{databaseName}"
+        print(self.databaseName)
         self.loadUsersData()
 
     def connectToVKApi(self):
@@ -78,7 +79,7 @@ class Server:
         userData = cursor.execute("""SELECT * FROM users""").fetchall()
         for user in userData:
             Thread(target=self.appendUserToExistingUsersList, args=(user, )).start()
-        print("Success")
+        print("Success!")
 
 class User:
     def __init__(self, mentionID, privacyPolicyIsAccepted=False, userIsLogged=False, getUserAuthDataMode=False, userAuthData=None, testMode=False, ignoreMode=True):
