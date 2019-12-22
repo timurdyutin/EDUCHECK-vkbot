@@ -193,7 +193,7 @@ class User:
             vk.messages.send(peer_id=self.mentionID, message="Ура! Теперь ты можешь пользоваться нашим ботом. \n Нажми на кнопку 'Войти', чтобы ввести свои данные", random_id=random.getrandbits(32), keyboard=authKeyboard.get_keyboard())
 
     def editUsersData(self, type, login=None, password=None):
-        connect = sqlite3.connect("usersDB.db")
+        connect = sqlite3.connect(server.databaseName)
         cursor = connect.cursor()
         availableDatabaseEditingTypes = {"setPrivacyPolicyIsAcceptedFlag": self.setPrivacyPolicyIsAcceptedFlag, "setUserIsLoggedFlag": self.setUserIsLoggedFlag, "addNewUserData": self.addNewUserData, "setUserAuthData": self.setUserAuthData}
         if login is not None and password is not None:
@@ -254,7 +254,7 @@ class User:
         RH = self.session.get(URL).text
         soup = bs4(RH, "lxml")
         soup = soup.find("table").findAll("td")
-        resultTags = [tag.text for tag in soup if (len(tag.attrs) == 0 or tag.text == "ИТОГО") and tag.string is not None and tag.text != '\n' and tag.text != "просмотр"][1:-3]
+        resultTags = [tag.text.strip() for tag in soup if (len(tag.attrs) == 0 or tag.text == "ИТОГО") and tag.string is not None and tag.text != '\n' and tag.text != "просмотр" and tag.text.strip() != "—"][1:-3]
         for index, item in enumerate(resultTags, 1):
             if item.isdigit():
                 item = int(item)
@@ -270,7 +270,7 @@ class User:
             if len(marks) >= 3:
                 if isinstance(marks[-2], float) is True:
                     self.reportCard[subject][-2] = f"средний балл: {self.reportCard[subject][-2]}"
-                    self.reportCard[subject][-1] = f"итоговая оценка: {self.reportCard[subject][-1]}"
+                    self.reportCard[subject][-1] = f"итоговая оценка: {int(self.reportCard[subject][-1])}"
                 else:
                     self.reportCard[subject][-1] = f"средний балл: {self.reportCard[subject][-1]}"
                 
