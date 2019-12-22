@@ -34,7 +34,7 @@ acceptPrivacyPolicyKeyboard.add_button("Принимаю")
 authKeyboard = VkKeyboard(one_time=False)
 authKeyboard.add_button("Войти", color=VkKeyboardColor.POSITIVE)
 
-availableCommands = ["Начать", "Принимаю", "Войти", "Табель успеваемости", "Расписание на день", "Расписание на неделю", "Выйти", "Помощь", "← Назад", "На завтра", "На сегодня", "На вчера", "Клавиатура администратора", "Отключить тестовый режим", "Включить тестовый режим"]
+availableCommands = ["Начать", "Принимаю", "Войти", "Выйти", "Табель успеваемости", "Расписание на день", "Расписание на неделю", "Выйти", "Помощь", "← Назад", "На завтра", "На сегодня", "На вчера", "Клавиатура администратора", "Отключить тестовый режим", "Включить тестовый режим"]
 admins = ["172244532"]
 
 class ThreadWithReturnValue(Thread):
@@ -106,6 +106,7 @@ class User:
         self.schoolCardsKeyboard.add_button("Расписание на день", color=VkKeyboardColor.PRIMARY)
         self.schoolCardsKeyboard.add_line()
         self.schoolCardsKeyboard.add_button("Помощь", color=VkKeyboardColor.POSITIVE)
+        self.schoolCardsKeyboard.add_button("Выйти", color=VkKeyboardColor.NEGATIVE)
         self.selectDayKeyboard = VkKeyboard(one_time=False)
         self.selectDayKeyboard.add_button("На завтра", color=VkKeyboardColor.PRIMARY)
         self.selectDayKeyboard.add_line()
@@ -125,7 +126,8 @@ class User:
                              "На сегодня": (self.parseDay, 0),
                              "На вчера": (self.parseDay, -1),
                              "На завтра": (self.parseDay, 1),
-                                "Помощь": self.sendHelpMessage} 
+                                "Помощь": self.sendHelpMessage,
+                                "Выйти": self.logout} 
         
         if self.testMode is False:
             if (time.time() - self.startTime > 2 and self.ignoreMode is True) or self.ignoreMode is False:
@@ -146,6 +148,15 @@ class User:
             if self.hg is True:
                 vk.messages.send(peer_id=self.mentionID, message="Ой, ты не входишь в программу тестирования этого бота. \n \n Как только бот выйдет из закрытого тестирования, мы сразу скажем тебе об этом.", random_id=random.getrandbits(32))
                 self.hg = False
+    
+    def logout(self):
+        print("log")
+        self.editUsersData("setUserIsLoggedFlag", flag=False)
+        self.editUsersData("setUserAuthData", flag=False)
+        self.userIsLogged = False
+        self.login = ""
+        self.password = ""
+        vk.messages.send(peer_id=self.mentionID, message="Вы успешно вышли.", random_id=random.getrandbits(32), keyboard=authKeyboard.get_keyboard())
     
     def sendHelpMessage(self):
         vk.messages.send(peer_id=self.mentionID, message="Все доступные команды бота: (https://vk.com/@educheck-help)", random_id=random.getrandbits(32))
@@ -192,12 +203,14 @@ class User:
             vk.messages.send(peer_id=self.mentionID, message="Список доступных команд (vk.com/@educheck-help)", random_id=random.getrandbits(32))
             vk.messages.send(peer_id=self.mentionID, message="Ура! Теперь ты можешь пользоваться нашим ботом. \n Нажми на кнопку 'Войти', чтобы ввести свои данные", random_id=random.getrandbits(32), keyboard=authKeyboard.get_keyboard())
 
-    def editUsersData(self, type, login=None, password=None):
+    def editUsersData(self, type, login=None, password=None, flag=None):
         connect = sqlite3.connect(server.databaseName)
         cursor = connect.cursor()
         availableDatabaseEditingTypes = {"setPrivacyPolicyIsAcceptedFlag": self.setPrivacyPolicyIsAcceptedFlag, "setUserIsLoggedFlag": self.setUserIsLoggedFlag, "addNewUserData": self.addNewUserData, "setUserAuthData": self.setUserAuthData}
         if login is not None and password is not None:
             availableDatabaseEditingTypes[type](connect, cursor, login, password)
+        elif type == "setUserIsLoggedFlag" or type == "setUserAuthData":
+            availableDatabaseEditingTypes[type](connect, cursor, flag)
         else:
             availableDatabaseEditingTypes[type](connect, cursor)
 
@@ -205,13 +218,16 @@ class User:
         cursor.execute(f"""UPDATE users SET privacyPolicyIsAccepted = {flag} WHERE id = {self.mentionID}""")
         connect.commit()
 
-    def setUserIsLoggedFlag(self, connect, cursor, flag=True):
+    def setUserIsLoggedFlag(self, connect, cursor, flag):
         cursor.execute(f"""UPDATE users SET userIsLogged = {flag} WHERE id = {self.mentionID}""")
         connect.commit()
         
-    def setUserAuthData(self, connect, cursor):
-        aData = f"{self.login} {self.password}" 
-        cursor.execute(f"""UPDATE users SET authData = ? WHERE id = {self.mentionID}""", (aData,))
+    def setUserAuthData(self, connect, cursor, flag):
+        if flag is True:
+            aData = f"{self.login} {self.password}" 
+            cursor.execute(f"""UPDATE users SET authData = ? WHERE id = {self.mentionID}""", (aData,))
+        else:
+            cursor.execute(f"""UPDATE users SET authData = ? WHERE id = {self.mentionID}""", (None,))
         connect.commit()
 
     def addNewUserData(self, connect, cursor):
@@ -239,8 +255,8 @@ class User:
                 self.password = password
                 self.getUserAuthDataMode = False
                 self.userIsLogged = True
-                self.editUsersData("setUserIsLoggedFlag")
-                self.editUsersData("setUserAuthData")
+                self.editUsersData("setUserIsLoggedFlag", flag=True)
+                self.editUsersData("setUserAuthData", flag=True)
                 self.sendAfterAuthMessage(True)
                 self.btime = time.time()
             else:
@@ -255,7 +271,6 @@ class User:
         soup = bs4(RH, "lxml")
         soup = soup.find("table").findAll("td")
         resultTags = [tag.text for tag in soup if ("colspan" in tag.attrs) or tag.string is not None and tag.text != '\n' and tag.text != "просмотр" and tag.text.strip() != "—"][4::]
-        print(resultTags)
         for index, item in enumerate(resultTags, 1):
             if item.isdigit():
                 item = int(item)
@@ -392,20 +407,6 @@ class User:
 class Admin(User):
     def __init__(self, mentionID, privacyPolicyIsAccepted=False, userIsLogged=False, getUserAuthDataMode=False, userAuthData=None, testMode=False, ignoreMode=False):
         super().__init__(mentionID=mentionID, privacyPolicyIsAccepted=privacyPolicyIsAccepted, userIsLogged=userIsLogged, getUserAuthDataMode=getUserAuthDataMode, userAuthData=userAuthData, testMode=testMode, ignoreMode=ignoreMode)
-        self.schoolCardsKeyboard = VkKeyboard(one_time=False)
-        self.schoolCardsKeyboard.add_button("Табель успеваемости", color=VkKeyboardColor.PRIMARY)
-        self.schoolCardsKeyboard.add_line()
-        self.schoolCardsKeyboard.add_button("Расписание на день", color=VkKeyboardColor.PRIMARY)
-        self.schoolCardsKeyboard.add_line()
-        self.schoolCardsKeyboard.add_button("Помощь", color=VkKeyboardColor.POSITIVE)
-        self.selectDayKeyboard = VkKeyboard(one_time=False)
-        self.selectDayKeyboard.add_button("На завтра", color=VkKeyboardColor.PRIMARY)
-        self.selectDayKeyboard.add_line()
-        self.selectDayKeyboard.add_button("На сегодня", color=VkKeyboardColor.PRIMARY)
-        self.selectDayKeyboard.add_line()
-        self.selectDayKeyboard.add_button("На вчера", color=VkKeyboardColor.PRIMARY)
-        self.selectDayKeyboard.add_line()
-        self.selectDayKeyboard.add_button("← Назад", color=VkKeyboardColor.POSITIVE)
         self.schoolCardsKeyboard.add_button("Клавиатура администратора", color=VkKeyboardColor.PRIMARY)
         self.adminKeyboard = VkKeyboard(one_time=False)
         self.adminKeyboard.add_button("Отключить тестовый режим", color=VkKeyboardColor.PRIMARY)
@@ -424,6 +425,7 @@ class Admin(User):
                              "На сегодня": (self.parseDay, f"https://edu.tatar.ru/user/diary/day?for={str(time.time()).split('.')[0]}"),
                              "На вчера": (self.parseDay, f"https://edu.tatar.ru/user/diary/day?for={int(str(time.time()).split('.')[0]) - 86400}"),
                              "На завтра": (self.parseDay, f"https://edu.tatar.ru/user/diary/day?for={int(str(time.time()).split('.')[0]) + 86400}"),
+                             "Выйти": self.logout,
                                 "Помощь": self.sendHelpMessage,
                                 "Клавиатура администратора": self.getAdminKeyboard,
                                 "Отключить тестовый режим": self.deactivateTestMode,
