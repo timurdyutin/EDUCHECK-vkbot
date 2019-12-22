@@ -59,7 +59,6 @@ class Server:
         self.databaseName = f"EDUCHECK-vkbot/data/{databaseName}"
         self.loadUsersData()
 
-
     def connectToVKApi(self):
         vk_session = vk_api.VkApi(token=self.token)
         vk = vk_session.get_api()
