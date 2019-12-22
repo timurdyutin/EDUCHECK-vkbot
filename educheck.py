@@ -44,7 +44,6 @@ class ThreadWithReturnValue(Thread):
         self._return = None
         
     def run(self):
-        print(type(self._target))
         if self._target is not None:
             self._return = self._target(*self._args,
                                                 **self._kwargs)
@@ -78,7 +77,6 @@ class Server:
         userData = cursor.execute("""SELECT * FROM users""").fetchall()
         for user in userData:
             Thread(target=self.appendUserToExistingUsersList, args=(user, )).start()
-        print("Success!")
 
 class User:
     def __init__(self, mentionID, privacyPolicyIsAccepted=False, userIsLogged=False, getUserAuthDataMode=False, userAuthData=None, testMode=False, ignoreMode=True):
@@ -150,7 +148,6 @@ class User:
                 self.hg = False
     
     def logout(self):
-        print("log")
         self.editUsersData("setUserIsLoggedFlag", flag=False)
         self.editUsersData("setUserAuthData", flag=False)
         self.userIsLogged = False
@@ -239,7 +236,6 @@ class User:
     def checkSessionIsValid(self):
         if time.time() - self.btime > 30:
             response = self.session.get("https://edu.tatar.ru/user/diary/term", allow_redirects=False)
-            print(response.status_code)
             if response.status_code != 200:
                 self.auth(self.login, self.password, hideMode=True)
 
@@ -252,7 +248,6 @@ class User:
         soup = bs4(RH, "lxml")
         if hideMode is False:
             if soup.h2.text.strip() == successElementText:
-                print(login, password)
                 self.login = login
                 self.password = password
                 self.getUserAuthDataMode = False
@@ -291,7 +286,6 @@ class User:
                 else:
                     self.reportCard[subject][-1] = f"средний балл: {self.reportCard[subject][-1]}"
                 
-        print(self.reportCard)
         self.returnContent()
         
     def selectDay(self):
@@ -500,23 +494,19 @@ def eventHandler(event):
             vk.messages.send(peer_id=event.obj["user_id"], message=f"Пока, {vk.users.get(user_ids=event.obj['user_id'])[0]['first_name']}. \n Мы будем скучать по тебе!", random_id=random.getrandbits(32), keyboard=getStartedKeyboard.get_keyboard())
             any_vk.status.set(text=f"С нами уже {any_vk.groups.getMembers(group_id=188029668)['count']} человек", group_id=188029668)
         elif event.type == VkBotEventType.MESSAGE_NEW:
-            print(existingUsers)
             thread = ThreadWithReturnValue(target=userIsExisting, args=(event.obj.message["from_id"], ))
             thread.start()
             user = thread.join()
             if event.obj.message["text"] in availableCommands:
                 Thread(target=user.callAvailableRequests, args=(event.obj.message["text"], )).start()
             if user.getUserAuthDataMode is True:
-                user.getUserAuthData(event.obj.message["text"])
-                
+                user.getUserAuthData(event.obj.message["text"])   
     except:
-        print("error")
+        pass
 
 
 for event in longpoll.listen():
     try:
         Thread(target=eventHandler, args=(event, )).start()
     except:
-        print("Произошла ошибка.")
-
-print("hellop")
+        pass
