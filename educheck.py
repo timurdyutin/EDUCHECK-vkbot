@@ -254,7 +254,8 @@ class User:
         RH = self.session.get(URL).text
         soup = bs4(RH, "lxml")
         soup = soup.find("table").findAll("td")
-        resultTags = [tag.text.strip() for tag in soup if (len(tag.attrs) == 0 or tag.text == "ИТОГО") and tag.string is not None and tag.text != '\n' and tag.text != "просмотр" and tag.text.strip() != "—"][1:-3]
+        resultTags = [tag.text for tag in soup if ("colspan" in tag.attrs) or tag.string is not None and tag.text != '\n' and tag.text != "просмотр" and tag.text.strip() != "—"][4::]
+        print(resultTags)
         for index, item in enumerate(resultTags, 1):
             if item.isdigit():
                 item = int(item)
@@ -336,7 +337,7 @@ class User:
                 if len(marks) == 0:
                     resultString += f"{subject}: — \n \n"
                 elif subject == "ИТОГО":
-                    resultString += f"Средний балл: {marks[0]}"
+                    resultString += f"Средний балл: {marks[0]}, итоговая оценка: {marks[3].split(': ')[1]}"
                 else:
                     resultString += f"{subject}: {', '.join([str(mark) for mark in marks])} \n \n"
             if len(resultString) == 0:
