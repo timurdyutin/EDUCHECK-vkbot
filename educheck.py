@@ -154,9 +154,11 @@ class User:
         self.editUsersData("setUserIsLoggedFlag", flag=False)
         self.editUsersData("setUserAuthData", flag=False)
         self.userIsLogged = False
+        vk.messages.send(peer_id=self.mentionID, message=f"Вы успешно вышли. \n Логин: {self.login} \n Пароль: {self.password}", random_id=random.getrandbits(32), keyboard=authKeyboard.get_keyboard())
         self.login = ""
         self.password = ""
-        vk.messages.send(peer_id=self.mentionID, message="Вы успешно вышли.", random_id=random.getrandbits(32), keyboard=authKeyboard.get_keyboard())
+        self.session = requests.Session()
+        self.session.get(url)
     
     def sendHelpMessage(self):
         vk.messages.send(peer_id=self.mentionID, message="Все доступные команды бота: (https://vk.com/@educheck-help)", random_id=random.getrandbits(32))
@@ -190,7 +192,7 @@ class User:
                 
     def sendAfterAuthMessage(self, flag):
         if flag is True:
-            vk.messages.send(peer_id=self.mentionID, message="Авторизация пройдена успешно.", random_id=random.getrandbits(32), keyboard=self.schoolCardsKeyboard.get_keyboard())
+            vk.messages.send(peer_id=self.mentionID, message=f"Авторизация пройдена успешно. \n Логин: {self.login} \n Пароль: {self.password}", random_id=random.getrandbits(32), keyboard=self.schoolCardsKeyboard.get_keyboard())
         else:
             vk.messages.send(peer_id=self.mentionID, message="Ты ввел неверный логин или пароль. \n \n Введи логин и пароль ещё раз, если ты снова хочешь попробовать войти.", random_id=random.getrandbits(32))
 
@@ -241,7 +243,6 @@ class User:
             if response.status_code != 200:
                 self.auth(self.login, self.password, hideMode=True)
 
-
     def auth(self, login, password, hideMode):
         cookie = {'_ga': 'GA1.2.1804685607.1574325953',
                         '_gid': 'GA1.2.1116002961.1574325953'}
@@ -251,6 +252,7 @@ class User:
         soup = bs4(RH, "lxml")
         if hideMode is False:
             if soup.h2.text.strip() == successElementText:
+                print(login, password)
                 self.login = login
                 self.password = password
                 self.getUserAuthDataMode = False
@@ -261,7 +263,6 @@ class User:
                 self.btime = time.time()
             else:
                 self.sendAfterAuthMessage(False)
-                
                 
     def parseReportCard(self, URL):
         self.reportCard = {}
