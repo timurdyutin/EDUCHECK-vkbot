@@ -72,7 +72,9 @@ class Server:
         self.token = token
         self.groupID = groupID
         self.databaseName = f"EDUCHECK-vkbot/data/{databaseName}"
+        print("hello message")
         self.loadUsersData()
+        
 
     def connectToVKApi(self):
         vk_session = vk_api.VkApi(token=self.token)
