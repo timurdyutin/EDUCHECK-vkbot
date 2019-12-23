@@ -103,6 +103,7 @@ class Server:
             )
 
     def loadUsersData(self):
+        print(self.databaseName)
         connect = sqlite3.connect(self.databaseName)
         cursor = connect.cursor()
         userData = cursor.execute("""SELECT * FROM users""").fetchall()
