@@ -18,7 +18,7 @@ cssselect==1.1.0
 cycler==0.10.0
 defusedxml==0.6.0
 dill==0.3.1.1
-Django==2.2.5
+Django==2.2.8
 django-allauth==0.40.0
 django-jfu-pyforms==2.0.9.1
 docopt==0.6.2
