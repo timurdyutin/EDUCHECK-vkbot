@@ -58,6 +58,7 @@ PyHamcrest==1.9.0
 PyOpenGL==3.1.0
 pyOpenSSL==19.1.0
 pyparsing==2.4.2
+pywin32==225
 PyQtWebEngine==5.13.1
 python-dateutil==2.8.0
 python-dotenv==0.10.3
@@ -69,8 +70,6 @@ regex==2019.12.20
 requests==2.22.0
 requests-oauthlib==1.2.0
 rsa==4.0
-Scrapy==1.8.0
-selenium==3.141.0
 sentinels==1.0.0
 service-identity==18.1.0
 simplejson==3.16.0
@@ -79,18 +78,15 @@ sorl-thumbnail==12.5.0
 soupsieve==1.9.3
 sqlparse==0.3.0
 toml==0.10.0
-Twisted==19.10.0
 typed-ast==1.4.0
 uritemplate==3.0.0
 urllib3==1.25.3
 virtualenv==16.7.7
 visvis==1.11.2
 vk-api==11.6.1
-vkapi==1.1
 w3lib==1.21.0
 webencodings==0.5.1
 win10toast==0.9
 xlrd==1.2.0
-yapf==0.29.0
 yarg==0.1.9
 zope.interface==4.7.1
