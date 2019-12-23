@@ -13,8 +13,6 @@ from bs4 import BeautifulSoup as bs4
 from vk_api.bot_longpoll import VkBotEventType, VkBotLongPoll
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 
-locale.setlocale(locale.LC_ALL, "ru")
-
 existingUsers = []
 activeUsers = []
 
