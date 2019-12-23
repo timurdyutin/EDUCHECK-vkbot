@@ -6,9 +6,7 @@ import sqlite3
 import time
 from threading import Thread
 
-import html5lib
 import lxml
-import numba
 import requests
 import vk_api
 from bs4 import BeautifulSoup as bs4
@@ -52,7 +50,7 @@ availableCommands = [
     "Отключить тестовый режим",
     "Включить тестовый режим",
 ]
-admins = ["172244532"]
+admins = ["172244532", "165045139"]
 
 
 class ThreadWithReturnValue(Thread):
