@@ -12,6 +12,7 @@ import vk_api
 from bs4 import BeautifulSoup as bs4
 from vk_api.bot_longpoll import VkBotEventType, VkBotLongPoll
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
+import os.path
 
 existingUsers = []
 activeUsers = []
@@ -71,7 +72,8 @@ class Server:
     def __init__(self, token, groupID, databaseName):
         self.token = token
         self.groupID = groupID
-        self.databaseName = f"app/EDUCHECK-vkbot/usersDB.db"
+        filepath = os.path.abspath("usersDB.db")
+        self.databaseName = filepath
         self.loadUsersData()
         
 
@@ -102,8 +104,6 @@ class Server:
             )
 
     def loadUsersData(self):
-        print(self.databaseName)
-        print(1)
         connect = sqlite3.connect(self.databaseName)
         cursor = connect.cursor()
         userData = cursor.execute("""SELECT * FROM users""").fetchall()
