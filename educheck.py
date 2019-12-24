@@ -71,8 +71,7 @@ class Server:
     def __init__(self, token, groupID, databaseName):
         self.token = token
         self.groupID = groupID
-        self.databaseName = databaseName
-        print("hello message")
+        self.databaseName = f"app/EDUCHECK-vkbot/usersDB.db"
         self.loadUsersData()
         
 
