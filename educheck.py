@@ -69,21 +69,27 @@ class ThreadWithReturnValue(Thread):
 
 
 class Server:
-    def __init__(self, token, groupID, databaseName):
+    def __init__(self, token, groupID, databaseName="usersDB.db"):
         self.token = token
         self.groupID = groupID
-        filepath = os.path.abspath("usersDB.db")
-        self.databaseName = filepath
+        self.databaseName = databaseName
+        self.connectToDB()
         self.loadUsersData()
         
-
+    def connectToDB(self):
+        try:
+            file = open('input.txt')
+        except IOError as e:
+            print(u'не удалось открыть файл')
+        
+        
     def connectToVKApi(self):
         vk_session = vk_api.VkApi(token=self.token)
         vk = vk_session.get_api()
         longpoll = VkBotLongPoll(vk_session, self.groupID)
         return vk_session, vk, longpoll
 
-    def appendUserToExistingUsersList(self, user):
+    def appendUserToExistingUsers(self, user):
         if str(user[0]) in admins:
             existingUsers.append(
                 Admin(
@@ -108,7 +114,7 @@ class Server:
         cursor = connect.cursor()
         userData = cursor.execute("""SELECT * FROM users""").fetchall()
         for user in userData:
-            Thread(target=self.appendUserToExistingUsersList, args=(user,)).start()
+            Thread(target=self.appendUserToExistingUsers, args=(user,)).start()
 
 
 class User:
@@ -140,6 +146,7 @@ class User:
         self.testMode = testMode
         self.hg = True
         self.btime = 0
+        self.htime = 0
         self.schoolCardsKeyboard = VkKeyboard(one_time=False)
         self.schoolCardsKeyboard.add_button(
             "Табель успеваемости", color=VkKeyboardColor.PRIMARY
@@ -417,6 +424,7 @@ class User:
     def parseReportCard(self, URL):
         self.reportCard = {}
         self.startTime = time.time()
+        self.htime = time.time()
         today = time.time()
         RH = self.session.get(URL).text
         soup = bs4(RH, "lxml")
@@ -535,8 +543,9 @@ class User:
             )
 
     def returnContent(self):
+        resultString = ""
+        marksStats = {}
         try:
-            resultString = ""
             for subject, marks in self.reportCard.items():
                 if len(marks) == 0:
                     resultString += f"{subject}: — \n \n"
@@ -546,6 +555,9 @@ class User:
                     resultString += (
                         f"{subject}: {', '.join([str(mark) for mark in marks])} \n \n"
                     )
+            print(self.htime)
+            print(time.time())
+            resultString += f"\n  \n Затраченное время: {str(time.time() - self.htime)[0:6]} с."
             if len(resultString) == 0:
                 raise
             else:
@@ -752,8 +764,8 @@ class Admin(User):
 
 
 server = Server(
-    token="855c82e1ca471b9af66fdb369be1e59d6d8233f93d361126c4eebf228d44dc7f4d4169498b062b90c9fa9",
-    groupID="188029668",
+    token="",
+    groupID="",
     databaseName="usersDB.db",
 )
 vk_session, vk, longpoll = server.connectToVKApi()
@@ -766,15 +778,19 @@ def userIsExisting(mentionID):
                 return user
     if str(mentionID) in admins:
         user = Admin(mentionID=mentionID)
+        user.editUsersData("addNewUserData")
+        existingUsers.append(user)
+        return user
     else:
         user = User(mentionID=mentionID)
-    user.editUsersData("addNewUserData")
-    existingUsers.append(user)
-    return user
+        user.editUsersData("addNewUserData")
+        existingUsers.append(user)
+        return user
 
 
 def eventHandler(event):
     try:
+        print(event)
         if event.type == VkBotEventType.GROUP_JOIN:
             vk.messages.send(
                 peer_id=event.obj["user_id"],
