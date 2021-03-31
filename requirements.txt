@@ -27,7 +27,7 @@ idna==2.8
 incremental==17.5.0
 infi.unittest==1.1.0
 jdcal==1.4.1
-lxml==4.4.1
+lxml==4.6.3
 munch==2.3.2
 natsort==6.0.0
 oauthlib==3.1.0
